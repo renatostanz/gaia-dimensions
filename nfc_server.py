@@ -6,10 +6,10 @@ import platform
 
 # --- Configuration ---
 PORT = 8000 # The port the server will listen on.
-ACTION_COMMAND = "action_hello" # The text written on your NFC tag.
+ACTION_COMMAND = "nfc-data" # The text written on your NFC tag.
 
 class MyHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
-    def do_GET(self):
+    def do_POST(self):
         # The path of the request will be the data sent from the phone
         # e.g., http://192.168.1.105:8000/action_hello
         request_path = self.path.strip("/")
