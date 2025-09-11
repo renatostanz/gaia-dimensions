@@ -5,7 +5,7 @@ import sys
 
 # --- Configuration ---
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
-PORT = 8080         # Port to listen on (must match the port in the Android app)
+PORT = 8000         # Port to listen on (must match the port in the Android app)
 ADB_PATH = 'adb'    # Assuming 'adb' is in your system's PATH
 
 def setup_adb_reverse():
@@ -48,7 +48,7 @@ def start_server():
                         if not chunk:
                             break
                         data_chunks.append(chunk)
-                        print(data_chuncks)
+                        print(data_chunks)
                     
                     # Combine, decode, and clean the data by stripping whitespace
                     raw_data = b''.join(data_chunks).decode('utf-8').strip()
