@@ -65,7 +65,7 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        serverUrl = "http://localhost:8000/nfc-data"
+        serverUrl = "http://"+ SERVER_IP + ":" + SERVER_PORT + "/nfc-data"
 
 
         val testButton: Button = findViewById(R.id.button)
@@ -230,10 +230,10 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this, "Tag data read!", Toast.LENGTH_SHORT).show()
 
                     //  Enviando payload String Via Http
-//                    sendDataToServerHttp(payloadString)
+                    sendDataToServerHttp(payloadString)
 
                     // Enviando payload String Via Http
-                    sendDataToServerBySocket(payloadString)
+                    //sendDataToServerBySocket(payloadString)
 
                 } else {
                     Log.d(TAG, "payloadBytes is null")
