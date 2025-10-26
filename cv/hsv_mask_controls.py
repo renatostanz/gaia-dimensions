@@ -35,8 +35,14 @@ while True:
 
     result = cv2.bitwise_and(image, image, mask=controls_mask)
 
+    cv2.namedWindow("original", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("original", 900, 600)
     cv2.imshow("original", image)
+    cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("mask", 900, 600)
     cv2.imshow("mask", controls_mask)
+    cv2.namedWindow("new", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("new", 900, 600)
     cv2.imshow("new", result)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         cv2.destroyAllWindows()
