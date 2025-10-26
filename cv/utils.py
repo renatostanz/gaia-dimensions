@@ -5,18 +5,10 @@ from itertools import combinations
 
 
 def get_ball_mask(hsv_image):
-    lower_ball = (150, 148, 136)
-    upper_ball = (179, 219, 255)
+    lower_ball = (135, 50, 136)
+    upper_ball = (179, 220, 255)
     return cv2.inRange(hsv_image, lower_ball, upper_ball)
 
-
-def get_ball_image(source_image, mask):
-    blured_mask = cv2.GaussianBlur(mask, (5,5), 0)
-    return cv2.bitwise_and(
-        source_image,
-        source_image,
-        mask=blured_mask
-    )
 
 def get_grid_mask(hsv_image):
         lower_grid = (20, 0, 56)
@@ -32,16 +24,14 @@ def get_max_contour_mask(contours, image_2d_shape):
 
 
 def apply_mask(source_image, mask):
-    blured_mask = cv2.medianBlur(mask, 5)
-    blured_mask = cv2.GaussianBlur(blured_mask, (5,5), 0)
     return cv2.bitwise_and(
         source_image,
         source_image,
-        mask=blured_mask
+        mask=mask
     )
 
 
-def get_grid_edges(grid):
+def get_edges(grid):
     scale = 1
     delta = 0
     ddepth = cv2.CV_16S
@@ -65,69 +55,6 @@ def get_grid_edges(grid):
     _, thresh_image = cv2.threshold(thresh_image, 250, 255, cv2.THRESH_BINARY)
 
     return grad
-
-
-def get_grid_divisions(edges):
-    edges_with_lines = edges.copy()
-    lines = cv2.HoughLinesP(
-        edges,
-        1,
-        np.pi/180,
-        threshold=50,
-        minLineLength=20,
-        maxLineGap=50
-    )
-    for points in lines:
-        x1,y1,x2,y2=points[0]
-        cv2.line(
-            edges_with_lines,
-            (x1,y1),
-            (x2,y2),
-            255,
-            2
-        )
-
-    return edges_with_lines
-
-
-def get_grid_divisions_edges(lines):
-    blured_mask = cv2.medianBlur(lines, 3)
-    blured_lines = cv2.bitwise_and(
-        lines,
-        lines,
-        mask=blured_mask
-    )
-
-    threshold_lower = 50
-    threshold_upper = 150
-
-    return cv2.Canny(
-        blured_lines,
-        threshold_lower,
-        threshold_upper,
-        L2gradient=True
-    )
-
-
-def get_grid_spaces(edges, input_grid):
-    grid = input_grid.copy()
-    contours, hierarchy = cv2.findContours(
-        edges,
-        cv2.RETR_EXTERNAL,
-        cv2.CHAIN_APPROX_NONE
-    )
-
-    boxes = []
-    for c in contours:
-        rot_rect = cv2.minAreaRect(c)
-        box = cv2.boxPoints(rot_rect)
-        box = np.intp(box)
-        boxes.append(box)
-
-    sorted_boxes = np.array(sorted(boxes, key=lambda box: Polygon(box).area)[-10:-1])
-    for box in sorted_boxes:
-        cv2.drawContours(grid, [box], 0, (0,0,255), 2)
-    return grid
 
 
 
@@ -157,9 +84,9 @@ def get_contours_infos(contours):
     return infos
 
 
-def get_contours(mask):
+def get_contours(image):
     contours, hierarchy = cv2.findContours(
-        mask,
+        image,
         cv2.RETR_EXTERNAL,
         cv2.CHAIN_APPROX_NONE
     )
@@ -451,7 +378,7 @@ def get_grid_boundaries(height, width, centroids):
     ], np.int32)
 
 
-def draw_grid_clusters(input_image, clusters):
+def draw_grid_areas(input_image, clusters):
     image = input_image.copy()
     for line_clusters in clusters:
         cv2.polylines(image, line_clusters, True, (0,0,255), 2)

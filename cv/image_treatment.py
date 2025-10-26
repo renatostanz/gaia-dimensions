@@ -20,7 +20,7 @@ hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 grid_mask = get_grid_mask(hsv_image)
 add_image("Grid's Mask", grid_mask)
 
-mask_edges = get_grid_edges(grid_mask)
+mask_edges = get_edges(grid_mask)
 add_image("Grid's Edges", mask_edges)
 
 all_grid_contours = get_contours(mask_edges)
@@ -30,17 +30,15 @@ add_image("All Possible Grid Contours", all_grid_contours_draw)
 mask = get_max_contour_mask(all_grid_contours, image.shape[:2])
 add_image("Mask", mask)
 
-hsv_image = cv2.bitwise_and(
-    hsv_image,
-    hsv_image,
-    mask=mask
-)
+hsv_image = apply_mask(hsv_image, mask)
+
 
 ball_mask = get_ball_mask(hsv_image)
 add_image("Ball's Mask", ball_mask)
 
-ball = get_ball_image(image, ball_mask)
-add_image("Ball", ball)
+ball_contours = get_contours(ball_mask)
+all_grid_contours_draw = draw_contours(image, ball_contours)
+add_image("All Possible Ball Contours", all_grid_contours_draw)
 
 
 grid_center_points_mask = get_center_points_mask(hsv_image)
@@ -60,8 +58,8 @@ grid_center_points_draw = draw_center_points_ordered(
 add_image("Grid Center Points Ordered", grid_center_points_draw)
 
 grid_boundaries = get_grid_boundaries(*image.shape[:-1], grid_center_points_centroids)
-grid_cluster_draw = draw_grid_clusters(image, grid_boundaries)
-add_image("Grid Clusters", grid_cluster_draw)
+grid_areas_draw = draw_grid_areas(image, grid_boundaries)
+add_image("Grid Clusters", grid_areas_draw)
 
 
 for infos in images:
