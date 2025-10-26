@@ -1,0 +1,75 @@
+import cv2
+import sys
+import numpy as np
+from utils import *
+
+images = []
+def add_image(name: str, image: np.array):
+    images.append({
+        "name": name,
+        "image": image
+    })
+
+file_name = sys.argv[1]
+
+image = cv2.imread(file_name)
+add_image("Original", image)
+
+hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+grid_mask = get_grid_mask(hsv_image)
+add_image("Grid's Mask", grid_mask)
+
+mask_edges = get_grid_edges(grid_mask)
+add_image("Grid's Edges", mask_edges)
+
+all_grid_contours = get_contours(mask_edges)
+all_grid_contours_draw = draw_contours(image, all_grid_contours)
+add_image("All Possible Grid Contours", all_grid_contours_draw)
+
+mask = get_max_contour_mask(all_grid_contours, image.shape[:2])
+add_image("Mask", mask)
+
+hsv_image = cv2.bitwise_and(
+    hsv_image,
+    hsv_image,
+    mask=mask
+)
+
+ball_mask = get_ball_mask(hsv_image)
+add_image("Ball's Mask", ball_mask)
+
+ball = get_ball_image(image, ball_mask)
+add_image("Ball", ball)
+
+
+grid_center_points_mask = get_center_points_mask(hsv_image)
+add_image("Grid Center Points Mask", grid_center_points_mask)
+
+grid_center_points_contours = get_contours(grid_center_points_mask)
+grid_center_points_contours_draw = draw_contours(image, grid_center_points_contours)
+add_image("Grid Center Points Circles", grid_center_points_contours_draw)
+
+grid_center_points_infos = get_contours_infos(grid_center_points_contours)
+grid_center_points_centroids = merge_split_centroids(grid_center_points_infos)
+grid_center_points_centroids = get_ordered_centroids_infos(grid_center_points_centroids)
+grid_center_points_draw = draw_center_points_ordered(
+    image,
+    grid_center_points_centroids
+)
+add_image("Grid Center Points Ordered", grid_center_points_draw)
+
+grid_boundaries = get_grid_boundaries(*image.shape[:-1], grid_center_points_centroids)
+grid_cluster_draw = draw_grid_clusters(image, grid_boundaries)
+add_image("Grid Clusters", grid_cluster_draw)
+
+
+for infos in images:
+    name, image = infos.values()
+    cv2.namedWindow(name, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(name, 900, 600)
+    cv2.imshow(name, image)
+
+if cv2.waitKey(0) & 0xFF == ord('q'):
+    cv2.destroyAllWindows()
+
