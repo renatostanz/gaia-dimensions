@@ -40,6 +40,10 @@ ball_contours = get_contours(ball_mask)
 all_grid_contours_draw = draw_contours(image, ball_contours)
 add_image("All Possible Ball Contours", all_grid_contours_draw)
 
+ball_centroid = get_max_area_contour_centroid(ball_contours)
+ball_centroid_draw = draw_centroids_ordered(image, [{'coord': ball_centroid}])
+add_image("Ball Centroid", all_grid_contours_draw)
+
 
 grid_center_points_mask = get_center_points_mask(hsv_image)
 add_image("Grid Center Points Mask", grid_center_points_mask)
@@ -51,7 +55,7 @@ add_image("Grid Center Points Circles", grid_center_points_contours_draw)
 grid_center_points_infos = get_contours_infos(grid_center_points_contours)
 grid_center_points_centroids = merge_split_centroids(grid_center_points_infos)
 grid_center_points_centroids = get_ordered_centroids_infos(grid_center_points_centroids)
-grid_center_points_draw = draw_center_points_ordered(
+grid_center_points_draw = draw_centroids_ordered(
     image,
     grid_center_points_centroids
 )
@@ -59,7 +63,7 @@ add_image("Grid Center Points Ordered", grid_center_points_draw)
 
 grid_boundaries = get_grid_boundaries(*image.shape[:-1], grid_center_points_centroids)
 grid_areas_draw = draw_grid_areas(image, grid_boundaries)
-add_image("Grid Clusters", grid_areas_draw)
+add_image("Grid Areas", grid_areas_draw)
 
 
 for infos in images:

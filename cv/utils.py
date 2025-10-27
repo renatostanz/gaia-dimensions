@@ -103,7 +103,6 @@ def draw_contours(input_image, contours):
         for c in centroids:
             cv2.circle(image, c, 2, (0,0,0), 2)
 
-
     return image
 
 
@@ -164,7 +163,7 @@ def merge_split_centroids(infos):
     return centroids
 
 
-def draw_center_points_ordered(input_image, ordered_centroids):
+def draw_centroids_ordered(input_image, ordered_centroids):
     image = input_image.copy()
 
     for i, p in enumerate(ordered_centroids):
@@ -384,3 +383,26 @@ def draw_grid_areas(input_image, clusters):
         cv2.polylines(image, line_clusters, True, (0,0,255), 2)
 
     return image
+
+
+def get_max_area_contour_centroid(contours):
+    max_area_contour = max(contours, key=lambda c: cv2.contourArea(c))
+    moment = cv2.moments(max_area_contour)
+    x = int(moment['m10']/moment['m00'])
+    y = int(moment['m01']/moment['m00'])
+    return (x, y)
+
+
+def get_grid_value(grid_boundaries, ball_centroid):
+    values = [
+        ["bottom-left", "middle-left", "top-left"],
+        ["bottom-middle", "middle-middle", "top-middle"],
+        ["bottom-right", "middle-right", "top-right"]
+    ]
+    for i, row in enumerate(values):
+        for u, val in enumerate(row):
+            contour = grid_boundaries[i, u]
+            is_in = cv2.pointPolygonTest(contour, ball_centroid, False)
+            if is_in >= 0:
+                return val
+
