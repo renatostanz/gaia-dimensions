@@ -1,7 +1,6 @@
 import cv2
 import sys
 from utils import *
-from time import time
 
 file_name = sys.argv[1]
 

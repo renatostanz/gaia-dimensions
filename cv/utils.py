@@ -11,9 +11,9 @@ def get_ball_mask(hsv_image):
 
 
 def get_grid_mask(hsv_image):
-        lower_grid = (20, 0, 56)
-        upper_grid = (85, 135, 255)
-        return cv2.inRange(hsv_image, lower_grid, upper_grid)
+    lower_grid = (20, 10, 56)
+    upper_grid = (90, 100, 255)
+    return cv2.inRange(hsv_image, lower_grid, upper_grid)
 
 
 def get_max_contour_mask(contours, image_2d_shape):
@@ -59,8 +59,8 @@ def get_edges(grid):
 
 
 def get_center_points_mask(hsv_image):
-    lower = (89, 89, 100)
-    upper = (132, 187, 255)
+    lower = (89, 72, 87)
+    upper = (132, 255, 255)
     return cv2.inRange(hsv_image, lower, upper)
 
 
@@ -125,6 +125,7 @@ def get_ordered_centroids_infos(centroids):
         key=lambda c: c.get('dist_to_origin')
     )
 
+    print("centroids", centroids)
     centroid_1_horizontal = centroids_with_infos[1].get('coord')[1]
     centroid_2_horizontal = centroids_with_infos[2].get('coord')[1]
 
@@ -388,6 +389,7 @@ def draw_grid_areas(input_image, clusters):
 def get_max_area_contour_centroid(contours):
     max_area_contour = max(contours, key=lambda c: cv2.contourArea(c))
     moment = cv2.moments(max_area_contour)
+    print(moment)
     x = int(moment['m10']/moment['m00'])
     y = int(moment['m01']/moment['m00'])
     return (x, y)
@@ -406,3 +408,35 @@ def get_grid_value(grid_boundaries, ball_centroid):
             if is_in >= 0:
                 return val
 
+
+
+def map_grid_value(input_image):
+    image = input_image.copy()
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+    grid_mask = get_grid_mask(image)
+    mask_edges = get_edges(grid_mask)
+    all_grid_contours = get_contours(mask_edges)
+    mask = get_max_contour_mask(all_grid_contours, image.shape[:2])
+
+    image = apply_mask(image, mask)
+
+
+    ball_mask = get_ball_mask(image)
+    ball_contours = get_contours(ball_mask)
+    ball_centroid = get_max_area_contour_centroid(ball_contours)
+    #return ball_centroid
+
+
+    grid_center_points_mask = get_center_points_mask(image)
+    grid_center_points_contours = get_contours(grid_center_points_mask)
+    #return cv2.cvtColor(draw_contours(image, grid_center_points_contours), cv2.COLOR_HSV2BGR)
+
+    grid_center_points_infos = get_contours_infos(grid_center_points_contours)
+    grid_center_points_centroids = merge_split_centroids(grid_center_points_infos)
+    grid_center_points_centroids = get_ordered_centroids_infos(grid_center_points_centroids)
+
+    grid_boundaries = get_grid_boundaries(*image.shape[:-1], grid_center_points_centroids)
+
+    value = get_grid_value(grid_boundaries, ball_centroid)
+    return value
