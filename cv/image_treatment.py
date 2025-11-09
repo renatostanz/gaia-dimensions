@@ -10,7 +10,7 @@ def add_image(name: str, image: np.array):
         "image": image
     })
 
-def render_images(images):
+def render_images():
     for infos in images:
         name, image = infos.values()
         cv2.namedWindow(name, cv2.WINDOW_NORMAL)
@@ -60,7 +60,6 @@ try:
         raise RuntimeError(f"No grid contour mask found!")
     else:
         add_image("Mask", mask)
-
 
     try:
         hsv_image = apply_mask(hsv_image, mask)
@@ -134,7 +133,7 @@ try:
         add_image("Grid Areas", grid_areas_draw)
 
 finally:
-    render_images(images)
+    render_images()
 
 
 
