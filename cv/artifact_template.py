@@ -76,7 +76,7 @@ try:
         cv2.imwrite(gray_path, gray)
         cv2.imwrite(mask_path, mask)
     else: 
-        raise OSError(f"Something went wrong with writing in {mask_path} or {mask_path}.")
+        raise OSError(f"Something went wrong with writing in {mask_path} or {gray_path}.")
 
 
 finally:
