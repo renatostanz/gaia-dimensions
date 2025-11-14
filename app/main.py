@@ -22,13 +22,13 @@ vector = Vector(
     )
 )
 
-@app.post("/cube")
+@app.post("/nfc-data")
 def post_dimensions(cube_dimensions: CubeDimensions):
-    vector.cube_dimensions = cube_dimensions
+    vector.cube = cube_dimensions
 
 @app.post("/grid")
 def post_positions(positions: GridPositions):
-    vector.grid_positions = positions
+    vector.grid = positions
 
 @app.get("/get")
 def get_artifacts_readings():
