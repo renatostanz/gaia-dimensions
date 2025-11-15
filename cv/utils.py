@@ -2,7 +2,11 @@ import cv2
 import numpy as np
 from shapely.geometry import Polygon
 from itertools import combinations
-
+import sys
+import os
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
+from app.models.artifacts import GridPositions
 
 #file_name = sys.argv[1]
 #image = cv2.imread(file_name)
@@ -517,22 +521,20 @@ def get_max_area_contour_centroid(contours):
     return (x, y)
 
 
-def get_grid_value(grid_boundaries, ball_centroid):
-    values = [
-        ["bottom-left", "middle-left", "top-left"],
-        ["bottom-middle", "middle-middle", "top-middle"],
-        ["bottom-right", "middle-right", "top-right"]
-    ]
-    for i, row in enumerate(values):
-        for u, val in enumerate(row):
-            contour = grid_boundaries[i, u]
+def get_grid_value(grid_boundaries, ball_centroid) -> GridPositions:
+    for h in range(3):
+        for v in range(3):
+            contour = grid_boundaries[h, v]
             is_in = cv2.pointPolygonTest(contour, ball_centroid, False)
             if is_in >= 0:
-                return val
+                return GridPositions(
+                    vertical_position=v-1,
+                    horizontal_position=h-1
+                )
 
 
 
-def map_grid_value(input_image):
+def map_grid_value(input_image) -> GridPositions:
     image = input_image.copy()
     image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 

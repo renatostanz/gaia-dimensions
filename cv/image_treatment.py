@@ -150,6 +150,12 @@ try:
     else:
         grid_areas_draw = draw_grid_areas(image, grid_boundaries)
         add_image("Grid Areas", grid_areas_draw)
+    
+    try:
+        value = get_grid_value(grid_boundaries, ball_centroid)
+        print(value)
+    except Exception as e: 
+        raise RuntimeError(f"Error while mapping grid value!")
 
 finally:
     render_images()
