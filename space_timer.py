@@ -2,19 +2,22 @@ import sys
 import time
 import tty
 import termios
+import select
 from typing import Optional, List, Any
 
 class SpaceTimer:
     
-    def __init__(self, pause_threshold: float = 1.0) -> None:
+    def __init__(self, pause_threshold: float = 1.5) -> None:
         self.pause_threshold: float = pause_threshold
         self.last_space_time: Optional[float] = None
         self.current_stroke_count: int = 0
         self.last_sequence_count: int = 0  
         self._old_termios_settings: Optional[List[Any]] = None 
 
-    def _platform_get_char(self) -> bytes:
-        return sys.stdin.read(1).encode('utf-8') 
+    def _platform_get_char(self, timeout: float = 0.1) -> Optional[bytes]:
+        if select.select([sys.stdin], [], [], timeout)[0]:
+            return sys.stdin.read(1).encode('utf-8')
+        return None
 
     def _platform_setup(self) -> None:
         fd = sys.stdin.fileno()
@@ -31,17 +34,20 @@ class SpaceTimer:
             print("Warning: Could not set terminal to cbreak mode.", file=sys.stderr)
             self._old_termios_settings = None 
 
+
     def _platform_cleanup(self) -> None:
         if self._old_termios_settings:
             fd = sys.stdin.fileno()
             termios.tcsetattr(fd, termios.TCSADRAIN, self._old_termios_settings)
             
+
     def get_last_sequence_count(self) -> int:
         return self.last_sequence_count
 
+
     def run(self) -> int:
-        print(f"Start typing spaces. A pause > {self.pause_threshold:.1f}s between spaces will stop.")
-        print("Pressing any other key or Ctrl+C will also stop.")
+        print(f"Start typing spaces. A pause > {self.pause_threshold:.1f}s will automatically end the sequence.")
+        print("Pressing Ctrl+C will stop the program or simply waiting a brief while after pressing any key after startiing a space bar sequence.")
         
         self._platform_setup() 
         self.current_stroke_count = 0
@@ -50,26 +56,31 @@ class SpaceTimer:
 
         try:
             while True:
-                char = self._platform_get_char()
                 current_time = time.time()
                 
+                if (self.last_space_time is not None and 
+                    self.current_stroke_count > 0 and 
+                    current_time - self.last_space_time >= self.pause_threshold):
+                    
+                    sys.stdout.write(f"\n--- Sequence ended after {self.pause_threshold:.1f}s pause ---")
+                    return self.current_stroke_count
+                
+                char = self._platform_get_char(timeout=0.1)
+                
+                if char is None:
+                    continue
+                
                 if char == b' ':
-                    if self.last_space_time is None:
+                    current_time = time.time() 
+                    
+                    if self.last_space_time is None or self.current_stroke_count == 0:
                         self.current_stroke_count = 1
                         sys.stdout.write(f"\r[Sequence started: 1]   ")
                         sys.stdout.write('\a')
-                        
                     else:
-                        time_delta = current_time - self.last_space_time
-                        
-                        if time_delta >= self.pause_threshold:
-                            sys.stdout.write(f"\n--- Slow stroke (>{self.pause_threshold:.1f}s). Sequence ended. ---")
-                            self.last_sequence_count = self.current_stroke_count
-                            break 
-                        else:
-                            self.current_stroke_count += 1
-                            sys.stdout.write(f"\r[Current sequence: {self.current_stroke_count}]   ")
-                            sys.stdout.write('\a')
+                        self.current_stroke_count += 1
+                        sys.stdout.write(f"\r[Current sequence: {self.current_stroke_count}]   ")
+                        sys.stdout.write('\a')
                     
                     self.last_space_time = current_time
                     sys.stdout.flush()
@@ -81,22 +92,13 @@ class SpaceTimer:
                     break 
                     
                 else:
-                    # Handle non-space characters
-                    if self.current_stroke_count > 0 and self.last_space_time is not None:
-                        # Check if too much time has passed since last space
-                        time_delta = current_time - self.last_space_time
-                        if time_delta >= self.pause_threshold:
-                            sys.stdout.write(f"\n--- Slow stroke (>{self.pause_threshold:.1f}s). Sequence ended. ---")
-                            self.last_sequence_count = self.current_stroke_count
-                            break 
-                        else:
-                            # Update the delta time but don't interrupt the sequence
-                            self.last_space_time = current_time
-                            sys.stdout.write(f"\r[Current sequence: {self.current_stroke_count}] (non-space key pressed)   ")
-                            sys.stdout.flush()
+                    if self.current_stroke_count > 0:
+                        current_time = time.time() 
+                        self.last_space_time = current_time
+                        sys.stdout.write(f"\r[Current sequence: {self.current_stroke_count}] (non-space ignored)   ")
                     else:
-                        sys.stdout.write(f"\r[Non-space key. Waiting for spaces...]   ")
-                        sys.stdout.flush()
+                        sys.stdout.write(f"\r[Waiting for spaces...]   ")
+                    sys.stdout.flush()
 
         except KeyboardInterrupt:
             print("\n--- Interrupted (KB) ---")
@@ -109,7 +111,8 @@ class SpaceTimer:
             self._platform_cleanup()
             print(f"\n\n--- Stopping ---")
             
-            print(f"Final sequence count: {self.last_sequence_count}")
+            if self.last_sequence_count > 0:
+                print(f"Last recorded sequence count: {self.last_sequence_count}")
 
         return self.last_sequence_count
 

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from app.models.artifacts import (
+from app.models import (
     CubeDimensions, 
     GridPositions, 
     Vector,
@@ -32,4 +32,4 @@ def post_positions(positions: GridPositions):
 
 @app.get("/get")
 def get_artifacts_readings():
-    return vector.reading
+    return vector.message

@@ -6,7 +6,7 @@ import sys
 import os
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
-from app.models.artifacts import GridPositions
+from app.models import GridPositions
 
 #file_name = sys.argv[1]
 #image = cv2.imread(file_name)
