@@ -21,14 +21,10 @@ def render_images():
         cv2.destroyAllWindows()
 
 
-image, template_grid, template_mask = [
-        cv2.imread(file_name)
-        for file_name in sys.argv[1:4]
-    ]
+file_name = sys.argv[1]
+image = cv2.imread(file_name)
 
 add_image("Original", image)
-add_image("Template Grid", template_grid)
-add_image("Template Mask", template_mask)
 
 hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
@@ -46,14 +42,6 @@ try:
         raise RuntimeError(f"Grid segmentation mask failed!")
     else:
         add_image("Grid segmentation", grid_mask)
-
-
-    try:
-        transformed_mask = get_artifact_area_mask(image, template_grid, template_mask)
-    except Exception as e: 
-        raise RuntimeError(f"Error in getting the artifact's mask!")
-    else:
-        add_image("Artifact Mask", transformed_mask)
 
 
     try:

@@ -8,39 +8,6 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 from app.models import GridPositions
 
-#file_name = sys.argv[1]
-#image = cv2.imread(file_name)
-#add_image("Original", image)
-#image = image[:,:,2]
-#
-#file_name = sys.argv[2]
-#other_image = cv2.imread(file_name)
-#add_image("Other", other_image)
-#other_image = other_image[:,:,2]
-#
-##sift = cv2.SIFT_create()
-##kp, desc = sift.detectAndCompute(image, None)
-##kp_o, desc_o = sift.detectAndCompute(other_image, None)
-#
-#orb = cv2.ORB_create()
-#kp, desc = orb.detectAndCompute(image, None)
-#kp_o, desc_o = orb.detectAndCompute(other_image, None)
-#
-#matcher = cv2.BFMatcher()
-#matches = matcher.match(desc, desc_o)
-#final = cv2.drawMatches(image, kp, other_image, kp_o, matches, None)
-#
-#add_image("Final", final)
-#render_images()
-
-#FLANN_INDEX_LSH = 6
-#index_params = dict(algorithm=FLANN_INDEX_LSH,
-#                    table_number=6,
-#                    key_size=12,
-#                    multi_probe_level=1)
-#search_params = dict(checks=50)
-
-#matcher = cv2.FlannBasedMatcher(index_params, search_params)
 def get_descriptors_matches(descriptors_1, descriptors_2):
     matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
     matches = matcher.knnMatch(
@@ -61,72 +28,6 @@ def get_descriptors_matches(descriptors_1, descriptors_2):
         raise ValueError("Not enough matches")
 
     return good_matches
-
-
-def get_artifact_area_mask(image, template_grid, template_mask):
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    template_grid = cv2.cvtColor(template_grid, cv2.COLOR_BGR2GRAY)
-    template_mask = cv2.cvtColor(template_mask, cv2.COLOR_BGR2GRAY)
-
-    sift = cv2.SIFT_create()
-    template_kp, template_descriptors = sift.detectAndCompute(template_grid, None)              
-    image_kp, image_descriptors = sift.detectAndCompute(gray_image, None)
-
-    matches = get_descriptors_matches(template_descriptors, image_descriptors)
-
-    template_points = np.empty((len(matches),2), dtype=np.float32)
-    image_point = np.empty((len(matches),2), dtype=np.float32)
-    for i in range(len(matches)):
-        template_points[i,0] = template_kp[matches[i].queryIdx].pt[0]
-        template_points[i,1] = template_kp[matches[i].queryIdx].pt[1]
-        image_point[i,0] = image_kp[matches[i].trainIdx].pt[0]
-        image_point[i,1] = image_kp[matches[i].trainIdx].pt[1]
-
-    H, _ =  cv2.findHomography(template_points, image_point, cv2.RANSAC)
-    if H is None:
-        raise ValueError("The holography function is compromised!")
-    #h, w = gray_image.shape
-    #return cv2.warpPerspective(template_mask, H, (w,h))
-    img_matches = np.empty(
-        (max(template_grid.shape[0], image.shape[0]), template_grid.shape[1]+image.shape[1], 3),
-
-        dtype=np.uint8
-    )
-    cv2.drawMatches(
-        template_grid,  # The gray template
-        template_kp,      # The template's KEYPOINTS
-        gray_image,       # The gray image (for consistency)
-        image_kp,         # The image's KEYPOINTS
-        matches,          # The list of good DMatch objects
-        img_matches,      # The output image
-        flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS
-    )
-    return img_matches
-
-
-#def get_artifact_area_mask(image, template_grid, template_mask):
-#    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-#
-#    orb = cv2.ORB_create()
-#    sift = cv2.SIFT_create()
-#    template_kp, template_descriptors = sift.detectAndCompute(template_grid, None)
-#    image_kp, image_descriptors = sift.detectAndCompute(gray_image, None)
-#
-#    matches = get_descriptors_matches(template_descriptors, image_descriptors)
-#
-#    template_points = np.empty((len(matches),2), dtype=np.float32)
-#    image_point = np.empty((len(matches),2), dtype=np.float32)
-#    for i in range(len(matches)):
-#        template_points[i,0] = template_kp[matches[i].queryIdx].pt[0]
-#        template_points[i,1] = template_kp[matches[i].queryIdx].pt[1]
-#        image_point[i,0] = image_kp[matches[i].trainIdx].pt[0]
-#        image_point[i,1] = image_kp[matches[i].trainIdx].pt[1]
-#
-#    H, _ =  cv2.findHomography(template_points, image_point, cv2.RANSAC)
-#    if H is None:
-#        raise ValueError("The holography function is compromised!")
-#    h, w = gray_image.shape
-#    return cv2.warpPerspective(template_mask, H, (w,h))
 
 def get_ball_mask(hsv_image):
     lower_ball = (135, 50, 136)
