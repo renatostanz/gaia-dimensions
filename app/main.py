@@ -5,6 +5,7 @@ from app.models import (
     GridPositions, 
     Vector,
 )
+from voice import NotificationSound
 
 app = FastAPI()
 
@@ -22,8 +23,11 @@ vector = Vector(
     )
 )
 
+notification = NotificationSound()
+
 @app.post("/nfc-data")
 def post_dimensions(cube_dimensions: CubeDimensions):
+    notification.play()
     vector.cube = cube_dimensions
 
 @app.post("/grid")
@@ -32,4 +36,4 @@ def post_positions(positions: GridPositions):
 
 @app.get("/get")
 def get_artifacts_readings():
-    return vector.message
+    return vector

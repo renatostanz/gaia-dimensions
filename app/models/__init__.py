@@ -90,25 +90,20 @@ class Vector(BaseModel):
                 if not getattr(self.cube, f'positive_in_{d}'):
                     vector[i] *= -1
 
+        print("VECTOR:", vector)
         return vector
     
     @computed_field
     @property
     def message(self) -> str:
         msg = 'Vetor com componentes: '
-        for value, dimension in zip(self.reading[0:2], ['i', 'j']):
+        for value, dimension in zip(self.reading, ['i', 'j', 'k']):
             if value == 0:
                 msg += f"{dimension} nulo, "
-            elif value == 1:
+            elif value > 0:
                 msg += f"{dimension} positivo, "
             else:
                 msg += f"{dimension} negativo, "
 
-        if self.reading[2] == 0:
-            msg += "k nulo."
-        elif self.reading[2] == 1:
-            msg += "k positivo."
-        else:
-            msg += "k negativo."
-
+        msg = msg[:-2] + '.'
         return msg
