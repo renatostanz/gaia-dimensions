@@ -8,27 +8,6 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 from app.models import GridPositions
 
-def get_descriptors_matches(descriptors_1, descriptors_2):
-    matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
-    matches = matcher.knnMatch(
-            descriptors_1, 
-            descriptors_2,
-            k=2
-    )
-
-    ratio_thresh = 0.75
-
-    good_matches = []
-    matches = [t for t in matches if len(t) == 2]
-    for m,n in matches:
-        if m.distance < ratio_thresh * n.distance:
-            good_matches.append(m)
-    
-    if len(good_matches) < 4:
-        raise ValueError("Not enough matches")
-
-    return good_matches
-
 def get_ball_mask(hsv_image):
     lower_ball = (135, 50, 136)
     upper_ball = (179, 220, 255)
@@ -36,8 +15,8 @@ def get_ball_mask(hsv_image):
 
 
 def get_grid_mask(hsv_image):
-    lower_grid = (20, 10, 56)
-    upper_grid = (90, 100, 255)
+    lower_grid = (30, 32, 56)
+    upper_grid = (93, 125, 255)
     return cv2.inRange(hsv_image, lower_grid, upper_grid)
 
 
@@ -88,7 +67,7 @@ def get_edges(grid):
 
 
 def get_center_points_mask(hsv_image):
-    lower = (89, 72, 87)
+    lower = (92, 75, 102)
     upper = (132, 255, 255)
     return cv2.inRange(hsv_image, lower, upper)
 
@@ -141,28 +120,22 @@ def get_euclidean_distance(p1, p2):
     )**(1/2)
 
 
-def get_ordered_centroids_infos(centroids):
-    centroids_with_infos = [
-        {
-            'coord': c,
-            'dist_to_origin': get_euclidean_distance(c, (0,0))
-        }
-        for c in centroids
-    ]
-    centroids_with_infos = sorted(
-        centroids_with_infos,
-        key=lambda c: c.get('dist_to_origin')
+def get_ordered_centroids(centroids):
+    centroid_0 = min(centroids, key=lambda c: get_euclidean_distance(c, (0,0)))
+    ordered_centroids = sorted(
+        centroids,
+        key=lambda c: get_euclidean_distance(c, centroid_0)
     )
 
-    centroid_1_horizontal = centroids_with_infos[1].get('coord')[1]
-    centroid_2_horizontal = centroids_with_infos[2].get('coord')[1]
+    centroid_1_horizontal = ordered_centroids[1][1]
+    centroid_2_horizontal = ordered_centroids[2][1]
 
     if centroid_1_horizontal > centroid_2_horizontal:
-        tmp = centroids_with_infos[1]
-        centroids_with_infos[1] = centroids_with_infos[2]
-        centroids_with_infos[2] = tmp
+        tmp = ordered_centroids[1]
+        ordered_centroids[1] = ordered_centroids[2]
+        ordered_centroids[2] = tmp
 
-    return centroids_with_infos
+    return ordered_centroids
 
 
 def merge_split_centroids(infos):
@@ -199,7 +172,7 @@ def draw_centroids_ordered(input_image, ordered_centroids):
         cv2.putText(
             image,
             str(i),
-            p.get('coord'),
+            p,
             cv2.FONT_HERSHEY_SIMPLEX,
             1,
             (0,0,0),
@@ -263,15 +236,15 @@ def get_grid_boundaries(height, width, centroids):
                     [
                         (0,0),
                         get_vector_limit(
-                            centroids[2].get('coord'),
-                            centroids[0].get('coord'), 
+                            centroids[2],
+                            centroids[0], 
                             height,
                             width, 
                         ),
-                        centroids[0].get('coord'),
+                        centroids[0],
                         get_vector_limit(
-                            centroids[1].get('coord'), 
-                            centroids[0].get('coord'),
+                            centroids[1], 
+                            centroids[0],
                             height,
                             width,
                         ),
@@ -279,125 +252,125 @@ def get_grid_boundaries(height, width, centroids):
         
                     [
                         get_vector_limit(
-                            centroids[2].get('coord'),
-                            centroids[0].get('coord'),
+                            centroids[2],
+                            centroids[0],
                             height,
                             width,
                         ),
                         get_vector_limit(
-                            centroids[3].get('coord'),
-                            centroids[1].get('coord'),
+                            centroids[3],
+                            centroids[1],
                             height,
                             width,
                         ),
-                        centroids[1].get('coord'),
-                        centroids[0].get('coord'),
+                        centroids[1],
+                        centroids[0],
                     ],
                     
                     [
                         get_vector_limit(
-                            centroids[3].get('coord'),
-                            centroids[1].get('coord'),
+                            centroids[3],
+                            centroids[1],
                             height,
                             width,
                         ),
                         (width, 0),
                         get_vector_limit(
-                            centroids[0].get('coord'),
-                            centroids[1].get('coord'),
+                            centroids[0],
+                            centroids[1],
                             height,
                             width,
                         ),
-                        centroids[1].get('coord'),
+                        centroids[1],
                     ],
                 ],
                 [
                     [
                         get_vector_limit(
-                            centroids[1].get('coord'),
-                            centroids[0].get('coord'),
+                            centroids[1],
+                            centroids[0],
                             height,
                             width,
                         ),
-                        centroids[0].get('coord'),
-                        centroids[2].get('coord'),
+                        centroids[0],
+                        centroids[2],
                         get_vector_limit(
-                            centroids[3].get('coord'),
-                            centroids[2].get('coord'),
+                            centroids[3],
+                            centroids[2],
                             height,
                             width,
                         ),
                     ],
         
                     [
-                        centroids[0].get('coord'),
-                        centroids[1].get('coord'),
-                        centroids[3].get('coord'),
-                        centroids[2].get('coord'),
+                        centroids[0],
+                        centroids[1],
+                        centroids[3],
+                        centroids[2],
                     ],
                     
                     [
-                        centroids[1].get('coord'),
+                        centroids[1],
                         get_vector_limit(
-                            centroids[0].get('coord'),
-                            centroids[1].get('coord'),
+                            centroids[0],
+                            centroids[1],
                             height,
                             width,
                         ),
                         get_vector_limit(
-                            centroids[2].get('coord'),
-                            centroids[3].get('coord'),
+                            centroids[2],
+                            centroids[3],
                             height,
                             width,
                         ),
-                        centroids[3].get('coord'),
+                        centroids[3],
                     ],
                 ],
         [
             [
                 get_vector_limit(
-                    centroids[3].get('coord'),
-                    centroids[2].get('coord'),
+                    centroids[3],
+                    centroids[2],
                     height,
                     width,
                 ),
-                centroids[2].get('coord'),
+                centroids[2],
                 get_vector_limit(
-                    centroids[0].get('coord'),
-                    centroids[2].get('coord'),
+                    centroids[0],
+                    centroids[2],
                     height,
                     width,
                 ),
                 (0, height),
             ],
             [
-                centroids[2].get('coord'),
-                centroids[3].get('coord'),
+                centroids[2],
+                centroids[3],
                 get_vector_limit(
-                    centroids[1].get('coord'),
-                    centroids[3].get('coord'),
+                    centroids[1],
+                    centroids[3],
                     height,
                     width,
                 ),
                 get_vector_limit(
-                    centroids[0].get('coord'),
-                    centroids[2].get('coord'),
+                    centroids[0],
+                    centroids[2],
                     height,
                     width,
                 ),
             ],
             [
-                centroids[3].get('coord'),
+                centroids[3],
                 get_vector_limit(
-                    centroids[2].get('coord'),
-                    centroids[3].get('coord'),
+                    centroids[2],
+                    centroids[3],
                     height,
                     width,
                 ),
                 (width, height),
                 get_vector_limit(
-                    centroids[1].get('coord'),
-                    centroids[3].get('coord'),
+                    centroids[1],
+                    centroids[3],
                     height,
                     width,
                 ),
@@ -459,7 +432,7 @@ def map_grid_value(input_image) -> GridPositions:
 
     grid_center_points_infos = get_contours_infos(grid_center_points_contours)
     grid_center_points_centroids = merge_split_centroids(grid_center_points_infos)
-    grid_center_points_centroids = get_ordered_centroids_infos(grid_center_points_centroids)
+    grid_center_points_centroids = get_ordered_centroids(grid_center_points_centroids)
 
     grid_boundaries = get_grid_boundaries(*image.shape[:-1], grid_center_points_centroids)
 

@@ -5,7 +5,7 @@ import cv2
 import requests
 
 class VideoTracker:
-    def __init__(self, video_ip='10.204.11.105', frame_interval=0.5):
+    def __init__(self, video_ip='10.141.130.105', frame_interval=0.5):
         self.video_source = f'http://{video_ip}:8080/video'
         self.central_url = 'http://localhost:8000/grid'
         self.frame_interval = frame_interval

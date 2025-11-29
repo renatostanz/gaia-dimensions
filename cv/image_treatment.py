@@ -96,7 +96,8 @@ try:
     except Exception as e: 
         raise RuntimeError(f"Error while getting ball mask contour centroid!")
     else:
-        ball_centroid_draw = draw_centroids_ordered(image, [{'coord': ball_centroid}])
+        print("Ball Centroid:", ball_centroid)
+        ball_centroid_draw = draw_centroids_ordered(image, [ball_centroid])
         add_image("Ball Centroid", ball_centroid_draw)
 
 
@@ -120,7 +121,7 @@ try:
     try:
         grid_center_points_infos = get_contours_infos(grid_center_points_contours)
         grid_center_points_centroids = merge_split_centroids(grid_center_points_infos)
-        grid_center_points_centroids = get_ordered_centroids_infos(grid_center_points_centroids)
+        grid_center_points_centroids = get_ordered_centroids(grid_center_points_centroids)
     except Exception as e: 
         raise RuntimeError(f"Error while handling the grid center points!")
     else:
